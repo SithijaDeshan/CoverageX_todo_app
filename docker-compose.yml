@@ -10,18 +10,50 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - todo-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
 
   backend:
-    build: ./backend
+    build: ./todo-backend
     container_name: todo_backend
     environment:
-      SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/todo_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME=root
-      SPRING_DATASOURCE_PASSWORD=root
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/todo_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
     ports:
       - "8080:8080"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+    networks:
+      - todo-network
+    restart: on-failure
+
+  frontend:
+    build: ./todo-frontend
+    container_name: todo_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - todo-network
+    restart: on-failure
 
 volumes:
   mysql_data:
+
+networks:
+  todo-network:
+    driver: bridge
