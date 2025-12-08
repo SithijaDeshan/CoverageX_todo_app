@@ -5,6 +5,7 @@ interface TaskCardProps {
   onComplete: (id: number) => void;
 }
 
+
 /**
  * TaskCard Component - Single Responsibility: Display individual task
  * Follows Interface Segregation: Minimal, focused props
